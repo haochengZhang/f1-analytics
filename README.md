@@ -7,10 +7,10 @@ Notebooks for data visualization
 
 ## Images
 
-![Driver Boxplot](https://raw.githubusercontent.com/haochengZhang/f1-analytics/master/images/sakhir/driver_box.svg "")
+![Driver Boxplot](https://github.com/haochengZhang/f1-analytics/blob/master/images/sakhir/constructor_box.svg)
 
 
-![Mercedes Violin](https://raw.githubusercontent.com/haochengZhang/f1-analytics/master/images/sakhir/mercedes_violin.svg "")
+![Mercedes Violin](https://github.com/haochengZhang/f1-analytics/blob/master/images/sakhir/mercedes_violin.svg)
 
 ## TODO:
 ..*Data science - predict overtakes from laptimes?
