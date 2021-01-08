@@ -7,10 +7,10 @@ Notebooks for data visualization
 
 ## Images
 
-![alt text](https://raw.githubusercontent.com/haochengZhang/f1-analytics/master/images/sakhir/driver_box.svg "")
+!(https://raw.githubusercontent.com/haochengZhang/f1-analytics/master/images/sakhir/driver_box.svg "")
 
 
-![alt text](https://raw.githubusercontent.com/haochengZhang/f1-analytics/master/images/sakhir/mercedes_violin.svg "")
+!(https://raw.githubusercontent.com/haochengZhang/f1-analytics/master/images/sakhir/mercedes_violin.svg "")
 
 ## TODO:
 ..*Data science - predict overtakes from laptimes?
