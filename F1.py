@@ -92,6 +92,7 @@ class Race():
         self.df_timing.LapTime = pd.to_numeric(
                 pd.Series(self.df_timing.LapTime))/6e10 #ns to min
 
+        # Grabs constructor,driver info
         soup = self.api_call('results')
         df_driverinfo = pd.DataFrame(columns=['Driver', 'Constructor'])
 
@@ -103,5 +104,23 @@ class Race():
                     'Constructor':constructor
                     }, ignore_index=True)
 
+        # Joins constructor info to timing dataframe
         self.df_timing = self.df_timing.join(
                 df_driverinfo.set_index('Driver'), on='Driver')
+
+    def format_by_driver(self):
+        # Formats new df with driver as column, laptime as row
+        self.df_timing_byDriver = pd.DataFrame(
+                data=self.df_timing.Lap.unique(),columns=['Lap'])
+
+        for driver in self.df_timing['Driver'].unique():
+            # PD Series of laptime for each driver with index as lap
+            right = self.df_timing[
+                    ['Driver', 'LapTime', 'Lap']
+                    ].loc[self.df_timing['Driver'] == driver].set_index(
+                            'Lap')['LapTime']
+            right.name = driver
+            self.df_timing_byDriver = self.df_timing_byDriver.join(
+                    right, how='outer', on='Lap')
+
+        self.df_timing_byDriver = self.df_timing_byDriver.set_index('Lap')
