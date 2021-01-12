@@ -47,6 +47,7 @@ class Race():
         self.name = name
         
     def api_call(self, query, limit=30, offset=0):
+        # Returns beautifulSoup of request
         payload = (
             f"http://ergast.com/api/f1/{self.year}/{self.round}/"
             f"{query}?limit={limit}&offset={offset}"
@@ -124,3 +125,12 @@ class Race():
                     right, how='outer', on='Lap')
 
         self.df_timing_byDriver = self.df_timing_byDriver.set_index('Lap')
+
+    def get_points_data(self):
+        soup = self.api_call('results')
+        self.points = {}
+
+        for result in soup.find_all('result'):
+            driver = result.driver.get('driverid')
+            point = int(result.get('points'))
+            self.points[driver] = point
