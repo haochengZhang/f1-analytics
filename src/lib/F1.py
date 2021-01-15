@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 import requests
+import collections
 
 
 class Season:
@@ -12,15 +13,17 @@ class Season:
 
         self.get_season_data()
 
-        self.drivers = {}
+        self.drivers = collections.defaultdict(list)
         self.constructors = {}
-        self.points = {'':0}
+        self.points = {}
+        self.races = {}
 
     def get_season_data(self):
         # Gets (round, racename) tuple for the given season
 
         payload = f"http://ergast.com/api/f1/{self.year}"
 
+        print('Calling API')
         r = requests.get(payload)
         if r.status_code != 200:
             raise RuntimeError("API Call Failed")
@@ -36,7 +39,7 @@ class Season:
 
     def create_race(self, round):
         # Creates a Race object stored in races[round]
-        self.races = {round:Race(self.year, round, self.racename[round])}
+        self.races[round] = Race(self.year, round, self.racename[round])
 
 
 class Race():
@@ -53,6 +56,7 @@ class Race():
             f"{query}?limit={limit}&offset={offset}"
             )
 
+        print('Calling API')
         r = requests.get(payload)
         if r.status_code != 200:
             raise RuntimeError("API Call Failed")
