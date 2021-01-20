@@ -8,6 +8,7 @@ import dash_html_components as html
 import plotly.express as px
 import pandas as pd
 
+#TODO: Move data injestion elsewhere
 path = Path(__file__).parent
 PATH_TO_DATA = path.parent / 'data'
 
@@ -19,7 +20,6 @@ df = pd.read_csv(path / 'sakhir_timing.csv')
 
 df_seasons = pd.read_csv(PATH_TO_DATA / 'seasons.csv')
 
-
 fig = px.violin(df.loc[df['Constructor'] == 'mercedes'], y='LapTime',
         color='Driver', violinmode='overlay')
 
@@ -29,7 +29,27 @@ fig2 = px.box(df, x='Driver', y='LapTime', color='Driver')
 
 app.layout = html.Div([
 
-    html.Button(id='load-page', n_clicks=0, children='Load'),
+    html.H1(
+        'Placeholder Header',
+        style={
+            'textAlign':'center'
+        }
+    ),
+    html.Label([
+        'Season:',
+        dcc.Dropdown(
+            id='seasons-dropdown',
+            options=[{'label': i ,'value': i} for i in df_seasons['year'].sort_values(ascending=False)],
+            placeholder='Select a season'),
+    ]),
+
+    html.Label([
+        'Race:',
+        dcc.Dropdown(
+            id='races-dropdown',
+            placeholder='Select a race')],
+        style={'display':'none'},
+        id='races-label'),
 
     html.Div([
 
@@ -42,7 +62,8 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id='xaxis-column',
                 options=[{'label':i, 'value':i} for i in df['Constructor'].unique()],
-                value='Mercedes'
+                value='Mercedes',
+                placeholder='Select a team'
             ),
         ],style={'width': '48%', 'display':'inliine-block'}),
 
@@ -51,25 +72,9 @@ app.layout = html.Div([
             figure=fig2
         ),
 
-        html.H6('Test Header'),
-
-        html.Div(["Input: ", 
-                    dcc.Input(id='Test Input', value='0', type='number')]),
-        html.Br(),
-        html.Div(id='Test Output')
-
     ], id='page-content', style={'display': 'none'})
 
 ])
-
-
-@app.callback(
-    Output(component_id='Test Output', component_property='children'),
-    Input(component_id='Test Input', component_property='value')
-)
-def update_output_div(input_value):
-    input_value = int(input_value) + 2
-    return 'Output: ' + str(input_value)
 
 @app.callback(
     Output('example-graph', 'figure'),
@@ -81,12 +86,29 @@ def update_graph(xaxis_column):
     return fig
 
 @app.callback(
-    Output('page-content', 'style'),
-    Input('load-page', 'n_clicks')
+    Output('races-label', 'style'),
+    Output('races-dropdown', 'options'),
+    Input('seasons-dropdown', 'value')
 )
-def update_page(n_clicks):
-    if n_clicks % 2 == 1:
-        return  {'display':'block'}
+def update_dropdowns(value):
+    df_races = pd.read_csv(PATH_TO_DATA / 'races.csv')
+
+    df_races = df_races.loc[df_races['year'] == value]
+    options = [{'label':i, 'value':i} for i in df_races['name']]
+    
+    if value:
+        return  [{'display':'block'}, options]
+    else:
+        return [{'display':'none'}, []]
+
+@app.callback(
+    Output('page-content', 'style'),
+    Input('races-dropdown', 'value')
+)
+def update_page(value):
+    #TODO: Load and update data source, update and rerender all graphs
+    if value:
+        return {'display':'block'}
     else:
         return {'display':'none'}
 
