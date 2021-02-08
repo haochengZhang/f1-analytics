@@ -1,6 +1,7 @@
 from dash.dependencies import Input, Output, State
 from lib import F1
 from pathlib import Path
+from datetime import timedelta
 
 import dash
 import dash_core_components as dcc
@@ -10,6 +11,12 @@ import plotly.graph_objects as go
 import pandas as pd
 
 import json
+
+def create_df_from_json(jsonString):
+
+
+    return NotImplementedError
+
 
 #TODO: Move data injestion elsewhere
 path = Path(__file__).parent
@@ -22,10 +29,6 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 df = pd.read_csv(path / 'sakhir_timing.csv')
 
 df_seasons = pd.read_csv(PATH_TO_DATA / 'seasons.csv')
-
-# fig = px.violin(df.loc[df['Constructor'] == 'mercedes'], y='LapTime',
-#         color='Driver', violinmode='overlay')
-
 
 fig = go.Figure()
 
@@ -47,23 +50,25 @@ app.layout = html.Div([
         dcc.Dropdown(
             id='seasons-dropdown',
             options=[
-                {'label': i ,'value': i} for i in df_seasons['year'].sort_values(ascending=False)],
+                {'label': i ,'value': i} for i in df_seasons['year']
+                .sort_values(ascending=False)
+            ],
             placeholder='Select a season'),
-    ], style={'width':'48%'}),
+    ], style={'width':'50%'}),
 
     html.Label([
         'Race:',
         dcc.Dropdown(
             id='races-dropdown',
             placeholder='Select a race')],
-        style={'display':'none', 'width':'48%'},
+        style={'display':'none', 'width':'50%'},
         id='races-label'),
 
     html.Div([
 
         dcc.Graph(
-            id='violin-drivers',
-            figure=fig
+            id='Boxplot All Drivers',
+            figure=fig2
         ),
 
         html.Div([
@@ -74,16 +79,19 @@ app.layout = html.Div([
                 value='',
                 placeholder='Select a team'
             ),
-        ],style={'width': '48%', 'display':'inliine-block'}),
+        ],style={'width': '50%', 'display':'inliine-block'}),
+
 
         dcc.Graph(
-            id='Boxplot All Drivers',
-            figure=fig2
+            id='violin-drivers',
+            figure=fig
         ),
 
     ], id='page-content', style={'display': 'none'}),
 
+    # Stores laptime data
     html.Div(id='race-data', style={'display':'none'}),
+    # Stores raceid:racename data
     html.Div(id='race-ids', style={'display':'none'}),
 
 ])
@@ -93,8 +101,11 @@ app.layout = html.Div([
     Input('xaxis-column', 'value'),
     prevent_initial_call=True
 )
-def update_graph(xaxis_column):
+def update_violin(xaxis_column):
     # Creates violin plot comparing drivers of each constructor
+
+    if not xaxis_column:
+        return go.Figure()
 
     dff = df.loc[df['Constructor'] == xaxis_column]
 
@@ -146,6 +157,7 @@ def update_graph(xaxis_column):
     Input('seasons-dropdown', 'value')
 )
 def update_dropdowns(value):
+    # Loads races for a given season
     df_races = pd.read_csv(PATH_TO_DATA / 'races.csv')
 
     df_races = df_races.loc[df_races['year'] == value]
@@ -153,9 +165,9 @@ def update_dropdowns(value):
     race_ids = df_races[['name', 'raceId']].set_index('name').to_json()
     
     if value:
-        return  [{'display':'block', 'width':'48%'}, options, race_ids]
+        return  [{'display':'block', 'width':'50%'}, options, race_ids]
     else:
-        return [{'display':'none', 'width':'48%'}, [], '']
+        return [{'display':'none', 'width':'50%'}, [], '']
 
 @app.callback(
     Output('page-content', 'style'),
@@ -186,11 +198,41 @@ def update_page(raceName, raceIds):
         df_laptimes['driverRef'] = df_laptimes['driverId'].map(idRef_map)
         df_laptimes['surname'] = df_laptimes['driverId'].map(idName_map)
 
-        
-
         return [{'display':'block'}, df_laptimes.to_json()]
     else:
         return [{'display':'none'},[]]
+
+@app.callback(
+    Output('Boxplot All Drivers', 'figure'),
+    Input('race-data', 'children'),
+    prevent_initial_call=True
+)
+def update_boxplot(raceData):
+    # Creates boxplot of driver's laptime
+
+    # Checks if raceData has content, return empty plot if empty
+    if not raceData:
+        return go.Figure()
+    
+    df_racedata = pd.read_json(raceData)
+
+    df_racedata['time'] = pd.to_datetime(df_racedata['milliseconds'], unit='ms')
+
+    fig = px.box(df_racedata, x='surname', y='time', color='surname',
+            labels={
+                'surname':'Driver',
+                'time':'LapTime [m:ss:ms]'
+            })
+
+    fig.update_yaxes(tickformat='%M:%S.%f')
+    fig.update_layout(
+        title={
+                'text':'Driver Laptimes',
+                'xanchor':'center',
+                'x':0.5
+    })
+
+    return fig
 
 if __name__ == '__main__':
     app.run_server(debug=True)
